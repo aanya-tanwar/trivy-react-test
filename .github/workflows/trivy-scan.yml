@@ -11,23 +11,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-- uses: actions/upload-artifact@v4
-      
-- name: Install Trivy
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Trivy
         run: |
-          TRIVY_VERSION=$(curl -s https://api.github.com/repos/aquasecurity/trivy/releases/latest | grep tag_name | cut -d '"' -f 4)
-          curl -L https://github.com/aquasecurity/trivy/releases/download/${TRIVY_VERSION}/trivy_${TRIVY_VERSION#v}_Linux-64bit.tar.gz -o trivy.tar.gz
-          tar zxvf trivy.tar.gz
+          sudo apt-get update
+          sudo apt-get install -y wget tar
+          wget https://github.com/aquasecurity/trivy/releases/latest/download/trivy_0.51.1_Linux-64bit.tar.gz
+          tar zxvf trivy_0.51.1_Linux-64bit.tar.gz
           sudo mv trivy /usr/local/bin/
           trivy --version
 
-      - name: Run Trivy Scan on filesystem
-        run: trivy fs --exit-code 0 --severity CRITICAL,HIGH --format table --output trivy-report.txt .
+      - name: Run Trivy Filesystem Scan
+        run: |
+          mkdir -p trivy-results
+          trivy fs --exit-code 0 --severity CRITICAL,HIGH --format table --output trivy-results/trivy-report.txt .
 
-      - name: Upload Trivy Report as artifact
-        uses: actions/upload-artifact@v3
+      - name: Upload Trivy Scan Report
+        uses: actions/upload-artifact@v4
         with:
-          name: trivy-report
-          path: trivy-report.txt
+          name: trivy-scan-report
+          path: trivy-results/trivy-report.txt
 
